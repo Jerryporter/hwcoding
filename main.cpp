@@ -7,9 +7,7 @@
 
 using namespace std;
 
-//数据类型定义,一共有3种数据类型:
-//服务器,虚拟机,指令
-//其中,指令类型为2合1,目前没有想好如何区分add和del指令.所以将add和del指令统一存到instruction结构中
+
 struct server {
     string name;
     int cpu;
@@ -18,7 +16,7 @@ struct server {
     int day_cost;
 
     server(string Iname, int Icpu, int Imem, int Ihard_cost, int Iday_cost) :
-            name(std::move(Iname)), cpu(Icpu), mem(Imem), hard_cost(Ihard_cost), day_cost(Iday_cost) {};
+            name(Iname), cpu(Icpu), mem(Imem), hard_cost(Ihard_cost), day_cost(Iday_cost) {};
 };
 
 struct vm {
@@ -41,12 +39,16 @@ struct instruction {
             instr_type(std::move(string1)), vm_type(std::move(string2)), vm_id(id) {};
 };
 
-//这里定义了3个暂存读入数据的vector
+
 vector<server> server_vector;
 vector<vm> vm_vector;
 vector<instruction> instr_vector;
+vector<vector<instruction>> instruction_assemble;
 
-//下面3个函数功能是字符串分割功能,使用读入的字符串创建对应的结构
+int all_day = 0;
+int day_instr_num = 0;
+
+
 server produceServer(string &string1) {
     int left_bound = 1;
     int right_bound = 1;
@@ -95,7 +97,7 @@ vm producevm(string &string1) {
     return vm(name, cpu, mem, setting);
 }
 
-instruction read_instruction(string &string1) {
+instruction produceInstruction(string &string1) {
     int left_bound = 1;
     int right_bound = 1;
 
@@ -103,7 +105,7 @@ instruction read_instruction(string &string1) {
     string instr_name = string1.substr(left_bound, right_bound - left_bound);
     left_bound = right_bound + 1;
 
-    //对于del指令,选择将其vm_type部分置空.
+
     string vm_type;
     if (instr_name != "del") {
         right_bound = string1.find(',', left_bound);
@@ -121,32 +123,50 @@ instruction read_instruction(string &string1) {
 }
 
 int main() {
-    //打开数据集文件
+
     ifstream train_file;
     train_file.open("../training-1.txt");
-    //判断数据文件是否成功打开
+
     if (train_file) {
-        //判断数据文件是否读完
+
         if (!train_file.eof()) {
             string read_line;
             getline(train_file, read_line);
             int count = stoi(read_line);
-            //此循环测试了是否可以正确读入服务器类型
+            server_vector.reserve(count);
+
             for (int i = 0; i < count; i++) {
                 getline(train_file, read_line);
-                cout << read_line;
+//                cout << read_line;
                 server_vector.push_back(produceServer(read_line));
             }
 
-            //此部分测试是否正确读入了虚拟机类型
             getline(train_file, read_line);
             count = stoi(read_line);
+            vm_vector.reserve(count);
             for (int i = 0; i < count; i++) {
                 getline(train_file, read_line);
-                cout << read_line;
+//                cout << read_line;
                 vm_vector.push_back(producevm(read_line));
             }
 
+
+            getline(train_file, read_line);
+            all_day = stoi(read_line);
+            instruction_assemble.reserve(all_day);
+
+            for (int i = 0; i < all_day; i++) {
+                getline(train_file, read_line);
+                day_instr_num = stoi(read_line);
+                instr_vector.reserve(day_instr_num);
+                for (int j = 0; j < day_instr_num; j++) {
+                    getline(train_file, read_line);
+//                    cout << read_line;
+                    instr_vector.push_back(produceInstruction(read_line));
+                }
+                instruction_assemble.push_back(instr_vector);
+                instr_vector.clear();
+            }
 
         }
     }
